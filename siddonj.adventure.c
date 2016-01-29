@@ -45,28 +45,42 @@ void initializeRooms() {
 
     // Look up room name and store address to name in created room array.
     char *roomName = possibleRooms[roomIndex];
+
+    // Make sure room doesn't exist.
     for(i = 0; i < numRooms; i++) {
       if(!strcmp(roomName, createdRooms[i])) {
-        printf("roomName: %s, createdRooms: %s\n", roomName, createdRooms[i]);
+        //printf("roomName: %s, createdRooms: %s\n", roomName, createdRooms[i]);
         roomExists = 1;
         break;
       }
     }
 
     // Check if room name has already been assigned.
-    if(!roomExists) {
-      // Add room name to 'selected room name array'.
-      createdRooms[numRooms] = possibleRooms[roomIndex];
-      numRooms++;
-    } else {      // If it has generate another random value and try again.
+    if(roomExists) {   // If it has generate another random value and try again.
       continue;
-    }
 
+    } else {          // Room doesn't exist.
+      createdRooms[numRooms] = possibleRooms[roomIndex];        // Add room name to 'selected room name array'.
+
+      // Open file
+      FILE *roomFile = fopen(createdRooms[numRooms], "w");
 
 // Else
 // -Assign Room Type
 // Generate random number between 0 and 2.
+  // while()
+      int roomType = rand() % 3;
 
+      // if(roomType == 1) {
+      //   startAssigned = 1;
+      //   continue;
+      // } else if(roomType == 3) {
+      //   endAssigned = 1;
+      //   continue;
+      // }
+
+
+      numRooms++;
 // Look up room type.
 // If START_ROOM has been assigned generate new number.
 // If END_ROOM has been assigned generate new number.
@@ -79,6 +93,7 @@ void initializeRooms() {
 // ROOM TYPE: START_ROOM
 
 // Room created increment total created counter.
+    }
   }
 
 
