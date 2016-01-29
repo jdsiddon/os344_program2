@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define NUM_ROOMS 7
 #define MAX_CONNECTIONS 6
@@ -10,18 +11,20 @@
 // Define possible room types.
 // START_ROOM, MID_ROOM, END_ROOM
 
-// This function concatenates two cstrings. WARNING MEMORY MUST BE DEALLOCATED BY CALLER!!!
-// void concat(char *destination, char *buffer) {
-//   strcat(destination, buffer);
-// }
-
-
 
 void initializeRooms() {
   char *possibleRooms[] = { "dungeon", "plover", "twisty", "Zork", "Pizza", "Crowther", "XYZZY", "bathroom", "ZELD", "bedroom" };
+  char *createdRooms[7];
+
   char tempDirectory[200] = "siddonj.rooms.";
   int PID = getpid();
   char buffer[100];
+
+  int numRooms = 0;       // Number of rooms in game created.
+  int roomIndex = 0;
+
+  int i;
+  int roomExists = 0;
 
   // Create temp directory name
   snprintf(buffer, 100, "%d", PID);         // Convert PID to string.
@@ -33,14 +36,32 @@ void initializeRooms() {
 
 
 // While loop until we get 7 rooms made.
-
+  while(numRooms < NUM_ROOMS) {
+    roomExists = 0;
 // -Assign Room Name
-// Generate random number between 0 and 9.
+    // Generate random number between 0 and 9.
+    roomIndex = rand() % 10;
+    // printf("Room Index: %d", roomIndex);
 
-// Look up room name
-// Check if room name has already been assigned.
+    // Look up room name and store address to name in created room array.
+    char *roomName = possibleRooms[roomIndex];
+    for(i = 0; i < numRooms; i++) {
+      if(!strcmp(roomName, createdRooms[i])) {
+        printf("roomName: %s, createdRooms: %s\n", roomName, createdRooms[i]);
+        roomExists = 1;
+        break;
+      }
+    }
 
-// If it has generate another random value and try again.
+    // Check if room name has already been assigned.
+    if(!roomExists) {
+      // Add room name to 'selected room name array'.
+      createdRooms[numRooms] = possibleRooms[roomIndex];
+      numRooms++;
+    } else {      // If it has generate another random value and try again.
+      continue;
+    }
+
 
 // Else
 // -Assign Room Type
@@ -58,6 +79,13 @@ void initializeRooms() {
 // ROOM TYPE: START_ROOM
 
 // Room created increment total created counter.
+  }
+
+
+  for(i = 0; i < NUM_ROOMS; i++) {
+    printf("Room: %s\n", createdRooms[i]);
+
+  }
 
 // We now have 7 rooms, let's assign connections between them.
 
@@ -84,10 +112,13 @@ void initializeRooms() {
 // Return the starting room.
 
 // END FUNC.
+
 };
 
 
 int main() {
+  srand(time(NULL));       // Create random seed.
+
   // get starting room. initializeRooms
   initializeRooms();
 
