@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define NUM_ROOMS 7
 #define MAX_CONNECTIONS 6
@@ -9,11 +10,26 @@
 // Define possible room types.
 // START_ROOM, MID_ROOM, END_ROOM
 
+// This function concatenates two cstrings. WARNING MEMORY MUST BE DEALLOCATED BY CALLER!!!
+// void concat(char *destination, char *buffer) {
+//   strcat(destination, buffer);
+// }
 
 
-// Function initializeRooms()
-// Create temporary directory
-// siddonj.rooms.[PID]
+
+void initializeRooms() {
+  char *possibleRooms[] = { "dungeon", "plover", "twisty", "Zork", "Pizza", "Crowther", "XYZZY", "bathroom", "ZELD", "bedroom" };
+  char tempDirectory[200] = "siddonj.rooms.";
+  int PID = getpid();
+  char buffer[100];
+
+  // Create temp directory name
+  snprintf(buffer, 100, "%d", PID);         // Convert PID to string.
+  strcat(tempDirectory, buffer);            // Combine PID with temporary directory name.
+  printf("%s", tempDirectory);
+
+  // Create temporary directory
+  mkdir(tempDirectory);
 
 
 // While loop until we get 7 rooms made.
@@ -68,12 +84,12 @@
 // Return the starting room.
 
 // END FUNC.
-
+};
 
 
 int main() {
   // get starting room. initializeRooms
-
+  initializeRooms();
 
 
   // While player is not in end room.
