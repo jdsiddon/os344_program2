@@ -17,6 +17,7 @@ void initializeRooms() {
   char *createdRooms[7];
 
   char tempDirectory[200] = "siddonj.rooms.";
+  char filePath[200] = "";
   int PID = getpid();
   char buffer[100];
 
@@ -37,6 +38,12 @@ void initializeRooms() {
 
 // While loop until we get 7 rooms made.
   while(numRooms < NUM_ROOMS) {
+    strcpy(filePath, "");               // Clear file path.
+    strcat(filePath, "./");               // Apend current directory to beginning.
+    strcat(filePath, tempDirectory);      // Add path to temporary folder.
+    strcat(filePath, "/");                // Add trailing slash.
+
+
     roomExists = 0;
 // -Assign Room Name
     // Generate random number between 0 and 9.
@@ -63,13 +70,15 @@ void initializeRooms() {
       createdRooms[numRooms] = possibleRooms[roomIndex];        // Add room name to 'selected room name array'.
 
       // Open file
-      FILE *roomFile = fopen(createdRooms[numRooms], "w");
-
+      strcat(filePath, createdRooms[numRooms]);            // Combine PID with temporary directory name.
+      printf("%s\n", filePath);
+      FILE *roomFile = fopen(filePath, "w");
+      fclose(roomFile);
 // Else
 // -Assign Room Type
 // Generate random number between 0 and 2.
   // while()
-      int roomType = rand() % 3;
+      // int roomType = rand() % 3;
 
       // if(roomType == 1) {
       //   startAssigned = 1;
