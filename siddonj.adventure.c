@@ -14,6 +14,7 @@
 
 void initializeRooms() {
   char *possibleRooms[] = { "dungeon", "plover", "twisty", "Zork", "Pizza", "Crowther", "XYZZY", "bathroom", "ZELD", "bedroom" };
+  char *possibleRoomTypes[] = { "START_ROOM", "MID_ROOM", "END_ROOM" };
   char *createdRooms[7];
 
   char tempDirectory[200] = "siddonj.rooms.";
@@ -26,6 +27,11 @@ void initializeRooms() {
 
   int i;
   int roomExists = 0;
+
+
+  int startAssigned = 0;
+  int endAssigned = 0;
+  int assignedRoomType = 0;
 
   // Create temp directory name
   snprintf(buffer, 100, "%d", PID);         // Convert PID to string.
@@ -73,26 +79,60 @@ void initializeRooms() {
       strcat(filePath, createdRooms[numRooms]);            // Combine PID with temporary directory name.
       printf("%s\n", filePath);
       FILE *roomFile = fopen(filePath, "w");
+
+      // Write room name.
+      fputs("ROOM NAME: ", roomFile);
+      fputs(roomName, roomFile);
+      fputs("\n", roomFile);
+
+      // -Assign Room Type
+      // Generate random number between 0 and 2.
+      // TODO: Clean up this awful loop!
+      int assignedRoomType = 0;
+      char *roomType = "";
+      int roomTypeIndex = 0;
+      int loopDone = 0;
+
+      do {
+        roomTypeIndex = rand() % 3;
+
+        if(roomTypeIndex == 0) {
+          if(startAssigned == 0) {// If START_ROOM has been assigned generate new number.
+            startAssigned = 1;
+            roomType = possibleRoomTypes[roomTypeIndex];
+            loopDone = 1;
+            break;
+          }
+
+        } else if(roomTypeIndex == 1) {
+          roomType = possibleRoomTypes[roomTypeIndex];
+          loopDone = 1;
+          break;
+
+        } else if(roomTypeIndex == 2) { // If END_ROOM has been assigned generate new number.
+          if(endAssigned == 0) {
+            endAssigned = 1;
+            roomType = possibleRoomTypes[roomTypeIndex];
+            loopDone = 1;
+            break;
+          }
+        }
+
+      } while(loopDone == 0);
+
+      printf("%s", roomType);
+
+      fputs("ROOM TYPE: ", roomFile);
+      fputs(roomType, roomFile);
+      fputs("\n", roomFile);
+
       fclose(roomFile);
-// Else
-// -Assign Room Type
-// Generate random number between 0 and 2.
-  // while()
-      // int roomType = rand() % 3;
-
-      // if(roomType == 1) {
-      //   startAssigned = 1;
-      //   continue;
-      // } else if(roomType == 3) {
-      //   endAssigned = 1;
-      //   continue;
-      // }
-
-
       numRooms++;
+
+    }
+  }
 // Look up room type.
-// If START_ROOM has been assigned generate new number.
-// If END_ROOM has been assigned generate new number.
+
 
 // Create 7 different room files and store them in the temporary directory. FIle name is Room Name
 // ROOM NAME: [Randomly assigned]
@@ -100,11 +140,6 @@ void initializeRooms() {
 // CONNECTION 2:
 // CONNECTION 3:
 // ROOM TYPE: START_ROOM
-
-// Room created increment total created counter.
-    }
-  }
-
 
   for(i = 0; i < NUM_ROOMS; i++) {
     printf("Room: %s\n", createdRooms[i]);
