@@ -158,56 +158,39 @@ void connectRooms(struct Room* rooms) {
       if(!strcmp(destRoom->name, sourceRoom->name)) {         // Room is looking at itself, return to top of to get different destination.
         continue;
 
-      } else if(destRoom->connCount < MAX_CONNECTIONS) {      // Make sure destination room has less than maximum number of connections.
-
-
-        // if(sourceRoom->connCount > 0) {                       // Make sure rooms aren't already connected.
-          // printf("Source Room: %s\n", sourceRoom->name);
-          for(j = 0; j < sourceRoom->connCount; j++) {
-            printf("Comparing: %s, %s\n\n", destRoom->name, sourceRoom->connections[j]->name);
-            if(!strcmp(destRoom->name, sourceRoom->connections[j]->name)) {
-              roomAlreadyConnected = 1;
-              printf("BREAK\n");
-              break;
-            }
+      } else if(destRoom->connCount < MAX_CONNECTIONS) {      // Make sure destination room has less than maximum number of connect
+        for(j = 0; j < sourceRoom->connCount; j++) {          // Make sure rooms aren't already connected, loop through each existing connection.
+          if(!strcmp(destRoom->name, sourceRoom->connections[j]->name)) {         // If the connection already exists, toggle a connection indicator.
+            roomAlreadyConnected = 1;
+            break;                                            // Break out of for loop.
           }
-        // }
+        }
 
-        if(roomAlreadyConnected > 0) {
-          printf("Room's connected already!\n");
+        if(roomAlreadyConnected > 0) {                        // Connectino already exists, return to top of while loop to fine new room to connect.
           continue;
         }
 
-        // Connect rooms
+        // Connection is new, so connect rooms.
         // Link the structs together.
-        destRoom->connections[destRoom->connCount] = sourceRoom; // Link connectee back to root.
+        destRoom->connections[destRoom->connCount] = sourceRoom;            // Link connectee back to root.
         sourceRoom->connections[sourceRoom->connCount] = destRoom;          // Link root to connectee.
 
-        // Incrementing connection counts first so we can use that number when writing to each file.
-        destRoom->connCount++;        // Increment connection count for connectee.
-        sourceRoom->connCount++;                 // Increment connection count for rootRoom room.
+        // Incrementing connection counts so we can use that number when writing to each file.
+        destRoom->connCount++;                                              // Increment connection count for connectee.
+        sourceRoom->connCount++;                                            // Increment connection count for rootRoom room.
 
-        // Update destination room file.
-        FILE *connectedRoom = fopen(destRoom->filePath, "a+");    // Open destination room and append to the end of file.
+        // Update destination room file with source room name.
+        FILE *connectedRoom = fopen(destRoom->filePath, "a+");              // Open destination room and append to the end of file.
         fprintf(connectedRoom, "CONNECTION %d: %s\n", destRoom->connCount, sourceRoom->name);
         fclose(connectedRoom);
 
-        // Update source room file.
-        FILE *rootRoom = fopen(sourceRoom->filePath, "a+");        // Open the source room and append to the end of file.
+        // Update source room file with destination room name.
+        FILE *rootRoom = fopen(sourceRoom->filePath, "a+");                 // Open the source room and append to the end of file.
         fprintf(rootRoom, "CONNECTION %d: %s\n", sourceRoom->connCount, destRoom->name);
         fclose(rootRoom);
       }
-
-
-
-
     }
-
-
-
   }
-
-
 };
 
 // Look up room type.
