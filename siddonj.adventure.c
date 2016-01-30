@@ -28,32 +28,15 @@ typedef struct Room Room;
 
 
 // This function gets called to initialize each room with a unique room name and create each room's text file with their room name.
-void initializeRooms(struct Room* rooms) {
+void initializeRooms(struct Room* rooms, char *tempDirectory) {
   char *possibleRooms[] = { "dungeon", "plover", "twisty", "Zork", "Pizza", "Crowther", "XYZZY", "bathroom", "ZELD", "bedroom" };
-
-  char tempDirectory[200] = "siddonj.rooms.";
-  char filePath[200] = "";
-  int PID = getpid();
-  char buffer[100];
-
   int numRooms = 0;       // Number of rooms in game created.
   int roomIndex = 0;
-
   int i;
   int roomExists = 0;
-
-
   int startAssigned = 0;
   int endAssigned = 0;
   int assignedRoomType = 0;
-
-  // Create temp directory name
-  snprintf(buffer, 100, "%d", PID);         // Convert PID to string.
-  strcat(tempDirectory, buffer);            // Combine PID with temporary directory name.
-
-  // Create temporary directory
-  mkdir(tempDirectory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );     // make directory, read/write/search permissions for owner and group.
-
 
   // While loop until we get 7 rooms made.
   while(numRooms < NUM_ROOMS) {
@@ -202,9 +185,10 @@ void deleteRooms(struct Room *rooms) {
 };
 
 
-Room* setStartRoom(struct Room* rooms) {
+Room* setStartRoom(struct Room* rooms, char *tempDirectory) {
   int i = 0;
   struct Room *currRoom;
+  char pathFileLocation[100];
 
   for(i = 0; i < NUM_ROOMS; i++) {
     currRoom = &rooms[i];
@@ -213,6 +197,14 @@ Room* setStartRoom(struct Room* rooms) {
       break;
     }
   }
+
+  strcpy(pathFileLocation, "./");
+  strcat(pathFileLocation, tempDirectory);
+  strcat(pathFileLocation, "/path");              // Set file to record users path.
+  printf(pathFileLocation);
+  FILE *pathFile = fopen(pathFileLocation, "a+");
+  fputs(currRoom->name, pathFile);
+  fclose(pathFile);
 
   return currRoom;
 };
@@ -259,11 +251,12 @@ void printRoomOptions(struct Room *room) {
   fclose(roomFile);
 };
 
-Room* getUserChoice(struct Room* room) {
+Room* getUserChoice(struct Room* room, char *pathFileLocation) {
   int i = 0;
   int roomValid = 0;
   struct Room *newRoom;
   char buffer[100];
+  char path[100];
 
 
   do {
@@ -276,7 +269,18 @@ Room* getUserChoice(struct Room* room) {
       if(!strcmp(room->connections[i]->name, buffer)) {       // If the user-entered string matches a connection, go to that room.
         newRoom = room->connections[i];                      // Set new room.
         // Write new room
-
+        // printf(pathFileLocation);
+        // FILE *pathFile = fopen(pathFileLocation, "a+");
+        // fprintf(pathFile, "%s", newRoom->name);
+        // fputs("t", pathFile);
+        // fclose(pathFile);
+        strcpy(path, "./");
+        strcat(path, pathFileLocation);
+        strcat(path, "/path");              // Set file to record users path.
+        FILE *pathFile = fopen(path, "a+");
+        fputs(newRoom->name, pathFile);
+        fclose(pathFile);
+        // printf("%s\n", path);
         roomValid = 1;
       }
     }
@@ -288,18 +292,30 @@ Room* getUserChoice(struct Room* room) {
 
 
 int main() {
+  char buffer[100];
+  int PID = getpid();
+  char tempDirectory[200] = "siddonj.rooms.";
+
   srand(time(NULL));       // Create random seed.
 
   // get starting room. initializeRooms
   struct Room *rooms = allocate();
 
+  // Create temp directory name
+  snprintf(buffer, 100, "%d", PID);         // Convert PID to string.
+  strcat(tempDirectory, buffer);            // Combine PID with temporary directory name.
+
+  // Create temporary directory
+  mkdir(tempDirectory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );     // make directory, read/write/search permissions for owner and group.
+
+
   // Set up the rooms to play.
-  initializeRooms(rooms);
+  initializeRooms(rooms, tempDirectory);
   connectRooms(rooms);
   assignRoomTypes(rooms);
 
   // Play the game!
-  struct Room *currentRoom = setStartRoom(rooms);
+  struct Room *currentRoom = setStartRoom(rooms, tempDirectory);
   printf("Starting room: %s\n", currentRoom->name);
   printf("Type: %s\n", currentRoom->type);
 
@@ -308,7 +324,7 @@ int main() {
   printRoomOptions(currentRoom);
 
   // Get user choice
-  currentRoom = getUserChoice(currentRoom);
+  currentRoom = getUserChoice(currentRoom, tempDirectory);
 
   // Validate string
 
