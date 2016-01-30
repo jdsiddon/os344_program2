@@ -203,7 +203,7 @@ Room* setStartRoom(struct Room* rooms, char *tempDirectory) {
   strcat(pathFileLocation, "/path");              // Set file to record users path.
   printf(pathFileLocation);
   FILE *pathFile = fopen(pathFileLocation, "a+");
-  fputs(currRoom->name, pathFile);
+  fprintf(pathFile, "%s\n", currRoom->name);
   fclose(pathFile);
 
   return currRoom;
@@ -269,18 +269,16 @@ Room* getUserChoice(struct Room* room, char *pathFileLocation) {
       if(!strcmp(room->connections[i]->name, buffer)) {       // If the user-entered string matches a connection, go to that room.
         newRoom = room->connections[i];                      // Set new room.
         // Write new room
-        // printf(pathFileLocation);
-        // FILE *pathFile = fopen(pathFileLocation, "a+");
-        // fprintf(pathFile, "%s", newRoom->name);
-        // fputs("t", pathFile);
-        // fclose(pathFile);
+        // TODO: Clean thsi up/
         strcpy(path, "./");
         strcat(path, pathFileLocation);
         strcat(path, "/path");              // Set file to record users path.
         FILE *pathFile = fopen(path, "a+");
-        fputs(newRoom->name, pathFile);
+        fprintf(pathFile, "%s\n", newRoom->name);
+        if(!strcmp(newRoom->type, "END_ROOM")) {
+          fputs("%", pathFile);
+        }
         fclose(pathFile);
-        // printf("%s\n", path);
         roomValid = 1;
       }
     }
@@ -316,16 +314,19 @@ int main() {
 
   // Play the game!
   struct Room *currentRoom = setStartRoom(rooms, tempDirectory);
-  printf("Starting room: %s\n", currentRoom->name);
-  printf("Type: %s\n", currentRoom->type);
+
+  while(strcmp(currentRoom->type, "END_ROOM") ) {
+
+    printf("Starting room: %s\n", currentRoom->name);
+    printf("Type: %s\n", currentRoom->type);
 
 
-  // Prompt user with move options from currentRoom
-  printRoomOptions(currentRoom);
+    // Prompt user with move options from currentRoom
+    printRoomOptions(currentRoom);
 
-  // Get user choice
-  currentRoom = getUserChoice(currentRoom, tempDirectory);
-
+    // Get user choice
+    currentRoom = getUserChoice(currentRoom, tempDirectory);
+  }
   // Validate string
 
   // Set room to user selection
