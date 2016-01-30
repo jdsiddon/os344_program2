@@ -11,11 +11,25 @@
 // Define possible room types.
 // START_ROOM, MID_ROOM, END_ROOM
 
+struct Room {
+  char name[100];
+  char type[100];
+  char filePath[100];
+  int connCount;
+  struct Room *connections[6];
+};
 
-void initializeRooms() {
+
+struct Room* allocate() {
+  struct Room *rooms = (struct Room*) malloc (7 * sizeof(struct Room));
+  return rooms;
+}
+
+
+
+
+void initializeRooms(struct Room* rooms) {
   char *possibleRooms[] = { "dungeon", "plover", "twisty", "Zork", "Pizza", "Crowther", "XYZZY", "bathroom", "ZELD", "bedroom" };
-  char *possibleRoomTypes[] = { "START_ROOM", "MID_ROOM", "END_ROOM" };
-  char *createdRooms[7];
 
   char tempDirectory[200] = "siddonj.rooms.";
   char filePath[200] = "";
@@ -42,127 +56,187 @@ void initializeRooms() {
   mkdir(tempDirectory);
 
 
-// While loop until we get 7 rooms made.
+  // While loop until we get 7 rooms made.
   while(numRooms < NUM_ROOMS) {
-    strcpy(filePath, "");               // Clear file path.
-    strcat(filePath, "./");               // Apend current directory to beginning.
-    strcat(filePath, tempDirectory);      // Add path to temporary folder.
-    strcat(filePath, "/");                // Add trailing slash.
-
 
     roomExists = 0;
-// -Assign Room Name
-    // Generate random number between 0 and 9.
-    roomIndex = rand() % 10;
-    // printf("Room Index: %d", roomIndex);
 
-    // Look up room name and store address to name in created room array.
-    char *roomName = possibleRooms[roomIndex];
+    // Make sure room name doesn't exist.
+    do {
+      roomExists = 0;
+      roomIndex = rand() % 10;                                // Generate random number between 0 and 9.
+      strcpy(rooms[numRooms].name, possibleRooms[roomIndex]);        // Look up room name and write it to the new room.
 
-    // Make sure room doesn't exist.
-    for(i = 0; i < numRooms; i++) {
-      if(!strcmp(roomName, createdRooms[i])) {
-        //printf("roomName: %s, createdRooms: %s\n", roomName, createdRooms[i]);
-        roomExists = 1;
-        break;
+      for(i = 0; i < numRooms; i++) {
+        if(!strcmp(rooms[numRooms].name, rooms[i].name)) {           // Check if room name has already been assigned.
+          roomExists = 1;
+          break;                      // There already is a room with that name.
+        }
       }
-    }
 
-    // Check if room name has already been assigned.
-    if(roomExists) {   // If it has generate another random value and try again.
-      continue;
+    } while(roomExists);
 
-    } else {          // Room doesn't exist.
-      createdRooms[numRooms] = possibleRooms[roomIndex];        // Add room name to 'selected room name array'.
+    // Room has a unique name.
 
-      // Open file
-      strcat(filePath, createdRooms[numRooms]);            // Combine PID with temporary directory name.
-      printf("%s\n", filePath);
-      FILE *roomFile = fopen(filePath, "w");
+    rooms[numRooms].connCount = 0;      // Intilize number of connections.
 
-      // Write room name.
-      fputs("ROOM NAME: ", roomFile);
-      fputs(roomName, roomFile);
-      fputs("\n", roomFile);
+    // Set rooms file path.
+    strcpy(rooms[numRooms].filePath, "");
+    strcat(rooms[numRooms].filePath, "./");
+    strcat(rooms[numRooms].filePath, tempDirectory);
+    strcat(rooms[numRooms].filePath, "/");
+    strcat(rooms[numRooms].filePath, rooms[numRooms].name);
 
-      // -Assign Room Type
-      // Generate random number between 0 and 2.
-      // TODO: Clean up this awful loop!
-      int assignedRoomType = 0;
-      char *roomType = "";
-      int roomTypeIndex = 0;
-      int loopDone = 0;
+    // Open file
+    FILE *roomFile = fopen(rooms[numRooms].filePath, "w");
 
-      do {
-        roomTypeIndex = rand() % 3;
+    // Write room name.
+    fputs("ROOM NAME: ", roomFile);
+    fputs(rooms[numRooms].name, roomFile);
+    fputs("\n", roomFile);
 
-        if(roomTypeIndex == 0) {
-          if(startAssigned == 0) {// If START_ROOM has been assigned generate new number.
-            startAssigned = 1;
-            roomType = possibleRoomTypes[roomTypeIndex];
-            loopDone = 1;
-            break;
-          }
+    fclose(roomFile);
 
-        } else if(roomTypeIndex == 1) {
-          roomType = possibleRoomTypes[roomTypeIndex];
-          loopDone = 1;
-          break;
+    numRooms++;
+  }
+};
 
-        } else if(roomTypeIndex == 2) { // If END_ROOM has been assigned generate new number.
-          if(endAssigned == 0) {
-            endAssigned = 1;
-            roomType = possibleRoomTypes[roomTypeIndex];
-            loopDone = 1;
-            break;
+void assignRoomTypes(struct Room* rooms) {
+  char *possibleRoomTypes[] = { "START_ROOM", "MID_ROOM", "END_ROOM" };
+  int i = 0;
+  int j = 0;
+  int roomIndex = 0;
+
+  for(i = 0; i < NUM_ROOMS; i++) {
+    FILE *roomFile = fopen(rooms[i].filePath, "w");          // Open room for writing.
+
+    // Assign Room Type
+    // Make sure room name doesn't exist.
+    int roomType = 0;
+    do {
+      roomType = 0;
+      roomIndex = rand() % 3;                                // Generate random number between 0 and 9.
+      strcpy(rooms[i].type, possibleRoomTypes[roomIndex]);        // Look up room name and write it to the new room.
+
+      if(!strcmp(rooms[i].type, possibleRoomTypes[0]) || !strcmp(rooms[i].type, possibleRoomTypes[2])) {    // If roomtype is start or end, make sure no others have that type.
+        for(j = 0; j < NUM_ROOMS; j++) {
+          if(!strcmp(rooms[i].type, rooms[j].type)) {           // Check if room name has already been assigned.
+            roomType = 1;
+            break;                                      // There already is a room with that name.
           }
         }
+      }
 
-      } while(loopDone == 0);
+    } while(roomType);
 
-      printf("%s", roomType);
+    // Set room type.
+    fputs("ROOM TYPE: ", roomFile);
+    fputs(rooms[i].type, roomFile);
+    fputs("\n", roomFile);
 
-      fputs("ROOM TYPE: ", roomFile);
-      fputs(roomType, roomFile);
-      fputs("\n", roomFile);
+    fclose(roomFile);
+  }
+};
 
-      fclose(roomFile);
-      numRooms++;
+
+void connectRooms(struct Room* rooms) {
+  int i = 0;
+  int j = 0;
+  int randNum;
+  struct Room *sourceRoom;              // Starting room.
+  struct Room *destRoom;                // Destination to connect to.
+
+  for(i = 0; i < NUM_ROOMS; i++) {
+    sourceRoom = &rooms[i];
+
+    while(sourceRoom->connCount < MIN_CONNECTIONS) {
+      randNum = rand() % NUM_ROOMS;                           // Get random room index.
+      destRoom = &rooms[randNum];
+
+      if(!strcmp(destRoom->name, sourceRoom->name)) {   // Room is looking at itself, so return to top of while.
+        printf("ROOMS MATCH %s %s\n\n", destRoom->name, sourceRoom->name);
+        continue;
+
+      } else {                                               // The rooms isn't looking at itself so make connection.
+        if(destRoom->connCount < MAX_CONNECTIONS) {           // Make sure destination room has less than maximum number of connections.
+
+          // Make sure rooms aren't already connected.
+          if(sourceRoom->connCount > 0) {
+            printf("Source Room: %s\n", sourceRoom->name);
+            for(j = 0; j < sourceRoom->connCount; j++) {
+              printf("Connected Room: %s\n", sourceRoom->connections[j]->name);
+            }
+          }
+
+          // Connect rooms
+          // Link the structs together.
+          destRoom->connections[destRoom->connCount] = sourceRoom; // Link connectee back to root.
+          sourceRoom->connections[sourceRoom->connCount] = destRoom;          // Link root to connectee.
+
+          // Incrementing connection counts first so we can use that number when writing to each file.
+          destRoom->connCount++;        // Increment connection count for connectee.
+          sourceRoom->connCount++;                 // Increment connection count for rootRoom room.
+
+          // Update destination room file.
+          FILE *connectedRoom = fopen(destRoom->filePath, "a+");    // Open destination room and append to the end of file.
+          fprintf(connectedRoom, "CONNECTION %d: %s\n", destRoom->connCount, sourceRoom->name);
+          fclose(connectedRoom);
+
+          // Update source room file.
+          FILE *rootRoom = fopen(sourceRoom->filePath, "a+");        // Open the source room and append to the end of file.
+          fprintf(rootRoom, "CONNECTION %d: %s\n", sourceRoom->connCount, destRoom->name);
+          fclose(rootRoom);
+        }
+      }
+
+
+
 
     }
+
+
+
   }
+
+
+};
+
 // Look up room type.
 
 
-// Create 7 different room files and store them in the temporary directory. FIle name is Room Name
-// ROOM NAME: [Randomly assigned]
-// CONNECTION 1:
-// CONNECTION 2:
-// CONNECTION 3:
-// ROOM TYPE: START_ROOM
+  // for(i = 0; i < NUM_ROOMS; i++) {
 
-  for(i = 0; i < NUM_ROOMS; i++) {
-    printf("Room: %s\n", createdRooms[i]);
+  //   FILE *room = fopen(filePath, "r+a");
 
-  }
 
-// We now have 7 rooms, let's assign connections between them.
+  //   int connectionCount = 0;
 
-// For each room file.
-// Check and see how many connections the room has, if 6 get another room.
-// Generate a number between 3 and 6, thats the number of connections we will have.
-// For each connection
 
-// Generate a number between 0 and 6, thats the name of the room it will connect to.
-// Find the file the room name it will connnect to in the temp directory.
+    // We now have 7 rooms, let's assign connections between them.
 
-// Total the number of connections in connecting room.
+    // For each room file.
+    // Check and see how many connections the room has, if 6 get another room.
+    // Generate a number between 3 and 6, thats the number of connections we will have.
+    // For each connection
 
-// If less than 6 - Make connection between rooms.
-// Write connection in current room.
-// Write connection in connecting room.
+    // Generate a number between 0 and 6, thats the name of the room it will connect to.
+    // Find the file the room name it will connnect to in the temp directory.
 
-// Else, find new room to connect to.
+    // Total the number of connections in connecting room.
+
+    // If less than 6 - Make connection between rooms.
+    // Write connection in current room.
+    // Write connection in connecting room.
+
+    // Else, find new room to connect to.
+
+
+
+
+
+
+
+
 
 
 // Continue loop.
@@ -171,6 +245,10 @@ void initializeRooms() {
 // Return the starting room.
 
 // END FUNC.
+  // return rooms; // Return array of rooms.
+
+
+void deleteRooms(struct Room *rooms) {
 
 };
 
@@ -179,8 +257,14 @@ int main() {
   srand(time(NULL));       // Create random seed.
 
   // get starting room. initializeRooms
-  initializeRooms();
+  struct Room *rooms = NULL;
+  rooms = allocate();
 
+  initializeRooms(rooms);
+
+  connectRooms(rooms);
+
+  deleteRooms(rooms);
 
   // While player is not in end room.
 
