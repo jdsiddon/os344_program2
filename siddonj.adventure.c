@@ -7,10 +7,7 @@
 #define MAX_CONNECTIONS 6
 #define MIN_CONNECTIONS 3
 
-// Define possible room names.
-// Define possible room types.
-// START_ROOM, MID_ROOM, END_ROOM
-
+// Struct to hold room data.
 struct Room {
   char name[100];
   char type[100];
@@ -19,15 +16,16 @@ struct Room {
   struct Room *connections[6];
 };
 
-
+// This function gets called to allocate enough space to hold the number rooms that will be used to play.
 struct Room* allocate() {
-  struct Room *rooms = (struct Room*) malloc (7 * sizeof(struct Room));
+  struct Room *rooms = (struct Room*) malloc (NUM_ROOMS * sizeof(struct Room));
   return rooms;
 }
 
+typedef struct Room Room;
 
 
-
+// This function gets called to initialize each room with a unique room name and create each room's text file with their room name.
 void initializeRooms(struct Room* rooms) {
   char *possibleRooms[] = { "dungeon", "plover", "twisty", "Zork", "Pizza", "Crowther", "XYZZY", "bathroom", "ZELD", "bedroom" };
 
@@ -77,7 +75,6 @@ void initializeRooms(struct Room* rooms) {
     } while(roomExists);
 
     // Room has a unique name.
-
     rooms[numRooms].connCount = 0;      // Intilize number of connections.
 
     // Set rooms file path.
@@ -106,39 +103,43 @@ void assignRoomTypes(struct Room* rooms) {
   int i = 0;
   int j = 0;
   int roomIndex = 0;
+  int startSet = 0;
+  int endSet = 0;
+
+  struct Room *currentRoom;
+  struct Room *otherRoom;
 
   for(i = 0; i < NUM_ROOMS; i++) {
-    FILE *roomFile = fopen(rooms[i].filePath, "w");          // Open room for writing.
+    currentRoom = &rooms[i];
 
     // Assign Room Type
     // Make sure room name doesn't exist.
     int roomType = 0;
     do {
-      roomType = 0;
-      roomIndex = rand() % 3;                                // Generate random number between 0 and 9.
-      strcpy(rooms[i].type, possibleRoomTypes[roomIndex]);        // Look up room name and write it to the new room.
+      roomIndex = rand() % 3;                                                   // Generate random number between 0 and 2.
+      // printf("\n%d\n", roomIndex);
+      if((roomIndex == 0 && !startSet) || (roomIndex == 2 && !endSet)) {                                    // If the selected room type was start or end.
+        if(roomIndex == 0)
+          startSet = 1;
+        if(roomIndex == 1)
+          endSet = 1;
 
-      if(!strcmp(rooms[i].type, possibleRoomTypes[0]) || !strcmp(rooms[i].type, possibleRoomTypes[2])) {    // If roomtype is start or end, make sure no others have that type.
-        for(j = 0; j < NUM_ROOMS; j++) {
-          if(!strcmp(rooms[i].type, rooms[j].type)) {           // Check if room name has already been assigned.
-            roomType = 1;
-            break;                                      // There already is a room with that name.
-          }
-        }
       }
+      // As long as roomType is set to 1, we will keep assigning room type until a valid type is assigned.
+      strcpy(currentRoom->type, possibleRoomTypes[roomIndex]);                  // Look up room name and write it to the new room.
 
-    } while(roomType);
+    } while(!startSet && !endSet);                              // Keep looping while room is of dupe start/end type
+                                                                              // and start and end aren't set.
 
-    // Set room type.
-    fputs("ROOM TYPE: ", roomFile);
-    fputs(rooms[i].type, roomFile);
-    fputs("\n", roomFile);
-
-    fclose(roomFile);
+    // Save room type to room file.
+    FILE *roomFile = fopen(currentRoom->filePath, "a+");                        // Open room for writing.
+    fprintf(roomFile, "ROOM TYPE: %s\n", currentRoom->type);                    // Write type to file.
+    fclose(roomFile);                                                           // Close file.
   }
 };
 
-
+// This function connects each room in rooms to one another. It makes sure that
+// The two rooms are linked together. e.g., Room A connects to Room B and Room B connects to Room A.
 void connectRooms(struct Room* rooms) {
   int i = 0;
   int j = 0;
@@ -193,55 +194,26 @@ void connectRooms(struct Room* rooms) {
   }
 };
 
-// Look up room type.
-
-
-  // for(i = 0; i < NUM_ROOMS; i++) {
-
-  //   FILE *room = fopen(filePath, "r+a");
-
-
-  //   int connectionCount = 0;
-
-
-    // We now have 7 rooms, let's assign connections between them.
-
-    // For each room file.
-    // Check and see how many connections the room has, if 6 get another room.
-    // Generate a number between 3 and 6, thats the number of connections we will have.
-    // For each connection
-
-    // Generate a number between 0 and 6, thats the name of the room it will connect to.
-    // Find the file the room name it will connnect to in the temp directory.
-
-    // Total the number of connections in connecting room.
-
-    // If less than 6 - Make connection between rooms.
-    // Write connection in current room.
-    // Write connection in connecting room.
-
-    // Else, find new room to connect to.
-
-
-
-
-
-
-
-
-
-
-// Continue loop.
-
-
-// Return the starting room.
-
-// END FUNC.
-  // return rooms; // Return array of rooms.
 
 
 void deleteRooms(struct Room *rooms) {
 
+};
+
+
+Room* setStartRoom(struct Room* rooms) {
+  int i = 0;
+  struct Room *currRoom;
+
+  for(i = 0; i < NUM_ROOMS; i++) {
+    currRoom = &rooms[i];
+
+    if(!strcmp(currRoom->type, "START_ROOM")) {
+      break;
+    }
+  }
+
+  return currRoom;
 };
 
 
@@ -252,9 +224,16 @@ int main() {
   struct Room *rooms = NULL;
   rooms = allocate();
 
+  // Set up the rooms to play.
   initializeRooms(rooms);
-
   connectRooms(rooms);
+  assignRoomTypes(rooms);
+
+  // Play the game!
+  struct Room *currentRoom = setStartRoom(rooms);
+  printf("Starting room: %s\n", currentRoom->name);
+  printf("Type: %s\n", currentRoom->type);
+
 
   deleteRooms(rooms);
 
