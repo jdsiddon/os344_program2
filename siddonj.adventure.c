@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #define NUM_ROOMS 7
 #define MAX_CONNECTIONS 6
@@ -48,15 +50,13 @@ void initializeRooms(struct Room* rooms) {
   // Create temp directory name
   snprintf(buffer, 100, "%d", PID);         // Convert PID to string.
   strcat(tempDirectory, buffer);            // Combine PID with temporary directory name.
-  printf("%s", tempDirectory);
 
   // Create temporary directory
-  mkdir(tempDirectory);
+  mkdir(tempDirectory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );     // make directory, read/write/search permissions for owner and group.
 
 
   // While loop until we get 7 rooms made.
   while(numRooms < NUM_ROOMS) {
-
     roomExists = 0;
 
     // Make sure room name doesn't exist.
@@ -197,7 +197,8 @@ void connectRooms(struct Room* rooms) {
 
 
 void deleteRooms(struct Room *rooms) {
-
+  free(rooms);
+  rooms = 0;
 };
 
 
@@ -216,13 +217,81 @@ Room* setStartRoom(struct Room* rooms) {
   return currRoom;
 };
 
+void printRoomOptions(struct Room *room) {
+  char buffer[100];
+  char *lineElements;
+  int elem = 0;
+  int lines = 0;
+  int lineCount = 0;
+  int c;
+  FILE *roomFile = fopen(room->filePath, "r");                // Open file for reading.
+
+  // Determine number of lines in file so we know where to start and stop reading from it.
+  do {
+    c = fgetc(roomFile);                                      // Get a character from file.
+    if(c == '\n')                                             // If that character = a new line then we know we have a line.
+      lines++;                                                // Increments line counter.
+  } while(c != EOF);
+
+  fseek(roomFile, 0, SEEK_SET);                               // Reset read position to beginning of file.
+
+  while(fgets(buffer, 100, roomFile) != NULL) {               // Read through each line in the file.
+    lineCount++;
+    lineElements = strtok(buffer, ":");                       // Divide line up by ":" symbol.
+    elem = 1;                                                 // elem 1 is left-side of : elem 2 is right-side.
+
+    while(lineElements != NULL) {                             // Loop through the two elements.
+      if(elem == 2) {                                         // Only print out the 2nd element in each line (data).
+        if (lineCount == 1) {
+          printf("CURRENT LOCATION:%s", lineElements);
+          printf("POSSIBLE CONNECTIONS:");
+        } else if(lineCount >= 2 && lines > lineCount) {      // Only print out from 2nd to end-1 lines.
+          lineElements[strcspn(lineElements, "\n")] = 0;      // Pull out newline, strcspn grabs the string chunk that is not in "\n"
+          printf(",%s", lineElements);
+        }
+      }
+
+      elem++;
+      lineElements = strtok(NULL, ":");                       // Get next element.
+    }
+
+  }
+  fclose(roomFile);
+};
+
+Room* getUserChoice(struct Room* room) {
+  int i = 0;
+  int roomValid = 0;
+  struct Room *newRoom;
+  char buffer[100];
+
+
+  do {
+    printf("\nWHERE TO?>");
+    fgets(buffer, 100, stdin);
+    buffer[strcspn(buffer, "\n")] = 0;                        // Pull out newline character from user entered string so string match can work.
+
+    // Loop through each connection room has.
+    for(i = 0; i < room->connCount; i++) {
+      if(!strcmp(room->connections[i]->name, buffer)) {       // If the user-entered string matches a connection, go to that room.
+        newRoom = room->connections[i];                      // Set new room.
+        // Write new room
+
+        roomValid = 1;
+      }
+    }
+  } while(!roomValid);
+
+
+  return newRoom;
+};
+
 
 int main() {
   srand(time(NULL));       // Create random seed.
 
   // get starting room. initializeRooms
-  struct Room *rooms = NULL;
-  rooms = allocate();
+  struct Room *rooms = allocate();
 
   // Set up the rooms to play.
   initializeRooms(rooms);
@@ -233,6 +302,28 @@ int main() {
   struct Room *currentRoom = setStartRoom(rooms);
   printf("Starting room: %s\n", currentRoom->name);
   printf("Type: %s\n", currentRoom->type);
+
+
+  // Prompt user with move options from currentRoom
+  printRoomOptions(currentRoom);
+
+  // Get user choice
+  currentRoom = getUserChoice(currentRoom);
+
+  // Validate string
+
+  // Set room to user selection
+
+  // Write room in user path file.
+
+
+  // Once at end
+
+
+  // COngradulate user
+
+  // Print contents fo path file to screen.
+
 
 
   deleteRooms(rooms);
