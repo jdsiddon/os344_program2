@@ -394,27 +394,19 @@ struct Room* getUserChoice(struct Room* room, char *pathFileLocation) {
 **    pathFileLocation, path to current room file to read possible movement locations from.
 ** Returns: none
 **************************************************/
-void congratulateUser(char *tempDirectory) {
+void congratulateUser(char *pathFilePath) {
+  int pathSteps = lineCount(pathFilePath);
   char lineBuffer[100];
-  char filePathBuffer[100];
-  int pathSteps = getLineCount();
 
   printf("\nYOU HAVE FOUND THE END ROOM. CONGRATULATIONS!\n");
-  printf("YOU TOOK %d STEPS. YOUR PATH TO VICTORY WAS:\n", );
+  printf("YOU TOOK %d STEPS. YOUR PATH TO VICTORY WAS:\n", pathSteps);
 
-  strcpy(filePathBuffer, "");
-  strcat(filePathBuffer, "./");
-  strcat(filePathBuffer, tempDirectory);
-  strcat(filePathBuffer, "/");
-  strcat(filePathBuffer, "path");
-
-  FILE *roomFile = fopen(filePathBuffer, "r");                // Open file for reading.
+  FILE *roomFile = fopen(pathFilePath, "r");                // Open file for reading.
 
   while(fgets(lineBuffer, 100, roomFile) != NULL) {
     printf("%s", lineBuffer);
   }
   printf("\n");
-
 };
 
 
@@ -422,19 +414,23 @@ int main() {
   char buffer[100];
   int PID = getpid();
   char tempDirectory[200] = "siddonj.rooms.";
+  // Create temp directory name
+  snprintf(buffer, 100, "%d", PID);         // Convert PID to string.
+  strcat(tempDirectory, buffer);            // Combine PID with temporary directory name.
+
+  char pathFilePath[200];
+  // Set path file path.
+  strcpy(pathFilePath, "./");
+  strcat(pathFilePath, tempDirectory);
+  strcat(pathFilePath, "/path");
 
   srand(time(NULL));       // Create random seed.
 
   // get starting room. initializeRooms
   struct Room *rooms = allocate();
 
-  // Create temp directory name
-  snprintf(buffer, 100, "%d", PID);         // Convert PID to string.
-  strcat(tempDirectory, buffer);            // Combine PID with temporary directory name.
-
   // Create temporary directory
   mkdir(tempDirectory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );     // make directory, read/write/search permissions for owner and group.
-
 
   // Set up the rooms to play.
   initializeRooms(rooms, tempDirectory);
@@ -449,7 +445,7 @@ int main() {
   }
 
   // Congradulate user
-  congratulateUser(tempDirectory);
+  congratulateUser(pathFilePath);
 
   // Print contents fo path file to screen.
 
