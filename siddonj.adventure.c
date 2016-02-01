@@ -18,16 +18,28 @@ struct Room {
   struct Room *connections[6];
 };
 
-// This function gets called to allocate enough space to hold the number rooms that will be used to play.
+/**************************************************
+** Function: allocate
+** Description: This function gets called to allocate enough space to hold the number rooms
+**    that will be used to play.
+** Parameters: none
+** Returns: Pointer to a struct
+**************************************************/
 struct Room* allocate() {
   struct Room *rooms = (struct Room*) malloc (NUM_ROOMS * sizeof(struct Room));
   return rooms;
 }
 
-typedef struct Room Room;
 
-
-// This function gets called to initialize each room with a unique room name and create each room's text file with their room name.
+/**************************************************
+** Function: initializeRooms
+** Description: This function gets called to initialize each room with a unique
+**    room name and create a text file for each room with the rooms name inserted.
+** Parameters:
+**    rooms, pointer to a group of rooms that will be the play area.
+**    tempDirectory, file path to a temporary directory to store the room files in.
+** Returns: none
+**************************************************/
 void initializeRooms(struct Room* rooms, char *tempDirectory) {
   char *possibleRooms[] = { "dungeon", "plover", "twisty", "Zork", "Pizza", "Crowther", "XYZZY", "bathroom", "ZELD", "bedroom" };
   int numRooms = 0;       // Number of rooms in game created.
@@ -81,6 +93,15 @@ void initializeRooms(struct Room* rooms, char *tempDirectory) {
   }
 };
 
+/**************************************************
+** Function: assignRoomTypes
+** Description: This function assigns room types to each created room.
+**    It makes sure that only one room has the "START_ROOM" and another
+**    has the "END_ROOM" type, the rest get assigned "MID_ROOM" types.
+** Parameters:
+**    rooms, pointer to a group of rooms that will be the play area.
+** Returns: none
+**************************************************/
 void assignRoomTypes(struct Room* rooms) {
   char *possibleRoomTypes[] = { "START_ROOM", "MID_ROOM", "END_ROOM" };
   int i = 0;
@@ -121,15 +142,23 @@ void assignRoomTypes(struct Room* rooms) {
   }
 };
 
-// This function connects each room in rooms to one another. It makes sure that
-// The two rooms are linked together. e.g., Room A connects to Room B and Room B connects to Room A.
+
+/**************************************************
+** Function: connectRooms
+** Description: This function connects each room in rooms to one another. It makes sure
+**    that the two rooms to be connected are completely linked together.
+**    e.g., Room A connects to Room B and Room B connects back to Room A.
+** Parameters:
+**    rooms, pointer to a group of rooms that will be the play area.
+** Returns: none
+**************************************************/
 void connectRooms(struct Room* rooms) {
   int i = 0;
   int j = 0;
   int randNum;
   int roomAlreadyConnected = 0;
-  struct Room *sourceRoom;              // Starting room.
-  struct Room *destRoom;                // Destination to connect to.
+  struct Room *sourceRoom;                                    // Starting room.
+  struct Room *destRoom;                                      // Destination to connect to.
 
   for(i = 0; i < NUM_ROOMS; i++) {
     sourceRoom = &rooms[i];
@@ -178,14 +207,30 @@ void connectRooms(struct Room* rooms) {
 };
 
 
-
+/**************************************************
+** Function: deleteRooms
+** Description: This function frees up the memory that was allocated to
+**    the rooms during intialization.
+** Parameters:
+**    rooms, pointer to a group of rooms that will be the play area.
+** Returns: none
+**************************************************/
 void deleteRooms(struct Room *rooms) {
   free(rooms);
   rooms = 0;
 };
 
-
-Room* setStartRoom(struct Room* rooms, char *tempDirectory) {
+/**************************************************
+** Function: setStartRoom
+** Description: This function sets the players position
+**    as the room with type = "START_ROOM" and records its name in the
+**    "path" file, which tracks the players path through the adventure for later review.
+** Parameters:
+**    rooms, pointer to a group of rooms that will be the play area.
+**    tempDirectory, tempDirectory that was created for this game run.
+** Returns: pointer to the players current room.
+**************************************************/
+struct Room* setStartRoom(struct Room* rooms, char *tempDirectory) {
   int i = 0;
   struct Room *currRoom;
   char pathFileLocation[100];
@@ -209,6 +254,14 @@ Room* setStartRoom(struct Room* rooms, char *tempDirectory) {
   return currRoom;
 };
 
+/**************************************************
+** Function: printRoomOptions
+** Description: Prints out the players current room to the console
+**    as well as the names of the other rooms that connect to it.
+** Parameters:
+**    rooms, pointer to a group of rooms that will be the play area.
+** Returns: none
+**************************************************/
 void printRoomOptions(struct Room *room) {
   char buffer[100];
   char *lineElements;
@@ -224,7 +277,7 @@ void printRoomOptions(struct Room *room) {
     if(c == '\n')                                             // If that character = a new line then we know we have a line.
       lines++;                                                // Increments line counter.
   } while(c != EOF);
-
+                                                              // lines now contains the number of lines in the rooms text file.
   fseek(roomFile, 0, SEEK_SET);                               // Reset read position to beginning of file.
 
   while(fgets(buffer, 100, roomFile) != NULL) {               // Read through each line in the file.
@@ -233,13 +286,15 @@ void printRoomOptions(struct Room *room) {
     elem = 1;                                                 // elem 1 is left-side of : elem 2 is right-side.
 
     while(lineElements != NULL) {                             // Loop through the two elements.
-      if(elem == 2) {                                         // Only print out the 2nd element in each line (data).
-        if (lineCount == 1) {
-          printf("CURRENT LOCATION:%s", lineElements);
+      if(elem == 2) {                                         // Only print out the text following the ":" on each line (data).
+        if (lineCount == 1) {                                 //
+          printf("\nCURRENT LOCATION:%s", lineElements);
           printf("POSSIBLE CONNECTIONS:");
         } else if(lineCount >= 2 && lines > lineCount) {      // Only print out from 2nd to end-1 lines.
           lineElements[strcspn(lineElements, "\n")] = 0;      // Pull out newline, strcspn grabs the string chunk that is not in "\n"
           printf(",%s", lineElements);
+        } else {
+          printf(".");
         }
       }
 
@@ -251,7 +306,18 @@ void printRoomOptions(struct Room *room) {
   fclose(roomFile);
 };
 
-Room* getUserChoice(struct Room* room, char *pathFileLocation) {
+
+/**************************************************
+** Function: getUserChoice
+** Description: This function prompts the user to enter
+**    the name of a room to move to, and then validates the users input.
+**    It continues to prompt the user for an input until they enter a valid room name.
+** Parameters:
+**    rooms, pointer to a group of rooms that will be the play area.
+**    pathFileLocation, path to current room file to read possible movement locations from.
+** Returns: pointer to new room player is moving to.
+**************************************************/
+struct Room* getUserChoice(struct Room* room, char *pathFileLocation) {
   int i = 0;
   int roomValid = 0;
   struct Room *newRoom;
@@ -316,16 +382,8 @@ int main() {
   struct Room *currentRoom = setStartRoom(rooms, tempDirectory);
 
   while(strcmp(currentRoom->type, "END_ROOM") ) {
-
-    printf("Starting room: %s\n", currentRoom->name);
-    printf("Type: %s\n", currentRoom->type);
-
-
-    // Prompt user with move options from currentRoom
-    printRoomOptions(currentRoom);
-
-    // Get user choice
-    currentRoom = getUserChoice(currentRoom, tempDirectory);
+    printRoomOptions(currentRoom);    // Prompt user with move options from currentRoom
+    currentRoom = getUserChoice(currentRoom, tempDirectory);      // Get user choice
   }
   // Validate string
 
