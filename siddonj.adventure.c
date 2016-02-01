@@ -18,6 +18,32 @@ struct Room {
   struct Room *connections[6];
 };
 
+
+/**************************************************
+** Function: lineCount
+** Description: This function opens the passed file path and counts the number of lines
+**    in the file.
+** Parameters: none
+** Returns: Pointer to a struct
+**************************************************/
+int lineCount(char *filePath) {
+  int lineCount = 0;
+  char c;             // Character from file.
+  FILE *file = fopen(filePath, "r");
+
+  // Determine number of lines in file
+  do {
+    c = fgetc(file);                                      // Get a character from file.
+    if(c == '\n')                                         // If that character = a new line then we know we have a line.
+      lineCount++;                                        // Increments line counter.
+  } while(c != EOF);
+
+  fclose(file);
+
+  return lineCount;
+};
+
+
 /**************************************************
 ** Function: allocate
 ** Description: This function gets called to allocate enough space to hold the number rooms
@@ -92,6 +118,7 @@ void initializeRooms(struct Room* rooms, char *tempDirectory) {
     numRooms++;
   }
 };
+
 
 /**************************************************
 ** Function: assignRoomTypes
@@ -266,33 +293,31 @@ void printRoomOptions(struct Room *room) {
   char buffer[100];
   char *lineElements;
   int elem = 0;
-  int lines = 0;
-  int lineCount = 0;
+  int roomFileLineCount = 0;
+  int lineInc = 0;
   int c;
-  FILE *roomFile = fopen(room->filePath, "r");                // Open file for reading.
 
   // Determine number of lines in file so we know where to start and stop reading from it.
-  do {
-    c = fgetc(roomFile);                                      // Get a character from file.
-    if(c == '\n')                                             // If that character = a new line then we know we have a line.
-      lines++;                                                // Increments line counter.
-  } while(c != EOF);
-                                                              // lines now contains the number of lines in the rooms text file.
+  roomFileLineCount = lineCount(room->filePath);
+
+  FILE *roomFile = fopen(room->filePath, "r");                // Open file for reading.
   fseek(roomFile, 0, SEEK_SET);                               // Reset read position to beginning of file.
 
   while(fgets(buffer, 100, roomFile) != NULL) {               // Read through each line in the file.
-    lineCount++;
+    lineInc++;
     lineElements = strtok(buffer, ":");                       // Divide line up by ":" symbol.
     elem = 1;                                                 // elem 1 is left-side of : elem 2 is right-side.
 
     while(lineElements != NULL) {                             // Loop through the two elements.
       if(elem == 2) {                                         // Only print out the text following the ":" on each line (data).
-        if (lineCount == 1) {                                 //
+        if (lineInc == 1) {                                 //
           printf("\nCURRENT LOCATION:%s", lineElements);
           printf("POSSIBLE CONNECTIONS:");
-        } else if(lineCount >= 2 && lines > lineCount) {      // Only print out from 2nd to end-1 lines.
+
+        } else if(lineInc >= 2 && roomFileLineCount > lineInc) {      // Only print out from 2nd to end-1 lines.
           lineElements[strcspn(lineElements, "\n")] = 0;      // Pull out newline, strcspn grabs the string chunk that is not in "\n"
-          printf(",%s", lineElements);
+          printf(lineInc==2?"%s":",%s", lineElements);
+
         } else {
           printf(".");
         }
@@ -301,7 +326,6 @@ void printRoomOptions(struct Room *room) {
       elem++;
       lineElements = strtok(NULL, ":");                       // Get next element.
     }
-
   }
   fclose(roomFile);
 };
@@ -324,8 +348,9 @@ struct Room* getUserChoice(struct Room* room, char *pathFileLocation) {
   char buffer[100];
   char path[100];
 
-
   do {
+    printRoomOptions(room);                                   // Print room options.
+
     printf("\nWHERE TO?>");
     fgets(buffer, 100, stdin);
     buffer[strcspn(buffer, "\n")] = 0;                        // Pull out newline character from user entered string so string match can work.
@@ -333,7 +358,7 @@ struct Room* getUserChoice(struct Room* room, char *pathFileLocation) {
     // Loop through each connection room has.
     for(i = 0; i < room->connCount; i++) {
       if(!strcmp(room->connections[i]->name, buffer)) {       // If the user-entered string matches a connection, go to that room.
-        newRoom = room->connections[i];                      // Set new room.
+        newRoom = room->connections[i];                       // Set new room.
         // Write new room
         // TODO: Clean thsi up/
         strcpy(path, "./");
@@ -348,10 +373,48 @@ struct Room* getUserChoice(struct Room* room, char *pathFileLocation) {
         roomValid = 1;
       }
     }
+
+    if(!roomValid) {                        // We had no valid room selection.
+      printf("\nHUH? I DON'T UNDERSTAND THAT ROOM. TRY AGAIN.\n");
+    }
+
   } while(!roomValid);
 
-
   return newRoom;
+};
+
+
+/**************************************************
+** Function: congratulateUser
+** Description: This function congratulates the user after they successfully
+**    reach the end room. It prints the total number of steps the user took to succeed
+**    along with the route taken.
+** Parameters:
+**    rooms, pointer to a group of rooms that will be the play area.
+**    pathFileLocation, path to current room file to read possible movement locations from.
+** Returns: none
+**************************************************/
+void congratulateUser(char *tempDirectory) {
+  char lineBuffer[100];
+  char filePathBuffer[100];
+  int pathSteps = getLineCount();
+
+  printf("\nYOU HAVE FOUND THE END ROOM. CONGRATULATIONS!\n");
+  printf("YOU TOOK %d STEPS. YOUR PATH TO VICTORY WAS:\n", );
+
+  strcpy(filePathBuffer, "");
+  strcat(filePathBuffer, "./");
+  strcat(filePathBuffer, tempDirectory);
+  strcat(filePathBuffer, "/");
+  strcat(filePathBuffer, "path");
+
+  FILE *roomFile = fopen(filePathBuffer, "r");                // Open file for reading.
+
+  while(fgets(lineBuffer, 100, roomFile) != NULL) {
+    printf("%s", lineBuffer);
+  }
+  printf("\n");
+
 };
 
 
@@ -382,24 +445,13 @@ int main() {
   struct Room *currentRoom = setStartRoom(rooms, tempDirectory);
 
   while(strcmp(currentRoom->type, "END_ROOM") ) {
-    printRoomOptions(currentRoom);    // Prompt user with move options from currentRoom
     currentRoom = getUserChoice(currentRoom, tempDirectory);      // Get user choice
   }
-  // Validate string
 
-  // Set room to user selection
-
-  // Write room in user path file.
-
-
-  // Once at end
-
-
-  // COngradulate user
+  // Congradulate user
+  congratulateUser(tempDirectory);
 
   // Print contents fo path file to screen.
-
-
 
   deleteRooms(rooms);
 
