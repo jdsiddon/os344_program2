@@ -131,41 +131,33 @@ void initializeRooms(struct Room* rooms, char *tempDirectory) {
 **************************************************/
 void assignRoomTypes(struct Room* rooms) {
   char *possibleRoomTypes[] = { "START_ROOM", "MID_ROOM", "END_ROOM" };
-  int i = 0;
-  int j = 0;
-  int roomIndex = 0;
-  int startSet = 0;
-  int endSet = 0;
+  int roomsSet = 0;           // Counter to keep track of how many room types we have set.
+  int randRoomIndex = 0;      // Random room index to get a random room.
 
   struct Room *currentRoom;
   struct Room *otherRoom;
 
-  for(i = 0; i < NUM_ROOMS; i++) {
-    currentRoom = &rooms[i];
+  while(roomsSet != NUM_ROOMS) {
+    randRoomIndex = rand() % 7;                                             // Pick a random room to set the type of.
+    currentRoom = &rooms[randRoomIndex];
 
-    // Assign Room Type
-    // Make sure room name doesn't exist.
-    int roomType = 0;
-    do {
-      roomIndex = rand() % 3;                                                   // Generate random number between 0 and 2.
-      // printf("\n%d\n", roomIndex);
-      if((roomIndex == 0 && !startSet) || (roomIndex == 2 && !endSet)) {                                    // If the selected room type was start or end.
-        if(roomIndex == 0)
-          startSet = 1;
-        if(roomIndex == 1)
-          endSet = 1;
-
+    if(!strcmp(currentRoom->type, "")) {                                        // Make sure type wasn't already set for that room.
+      if(roomsSet == 0) {                                                       // Only set one room to start.
+        strcpy(currentRoom->type, possibleRoomTypes[0]);
+      } else if(roomsSet == 1) {                                                // Only set one room to end.
+        strcpy(currentRoom->type, possibleRoomTypes[2]);
+      } else {
+        strcpy(currentRoom->type, possibleRoomTypes[1]);                        // Set the others as mid.
       }
-      // As long as roomType is set to 1, we will keep assigning room type until a valid type is assigned.
-      strcpy(currentRoom->type, possibleRoomTypes[roomIndex]);                  // Look up room name and write it to the new room.
 
-    } while(!startSet && !endSet);                              // Keep looping while room is of dupe start/end type
-                                                                              // and start and end aren't set.
+      // Save room type to room file.
+      FILE *roomFile = fopen(currentRoom->filePath, "a+");                      // Open room for writing.
+      fprintf(roomFile, "ROOM TYPE: %s\n", currentRoom->type);                  // Write type to file.
+      fclose(roomFile);
 
-    // Save room type to room file.
-    FILE *roomFile = fopen(currentRoom->filePath, "a+");                        // Open room for writing.
-    fprintf(roomFile, "ROOM TYPE: %s\n", currentRoom->type);                    // Write type to file.
-    fclose(roomFile);                                                           // Close file.
+      roomsSet++;                                                               // Increment the number of rooms set.
+
+    }                                                           // Close file.
   }
 };
 
