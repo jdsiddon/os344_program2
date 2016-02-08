@@ -265,7 +265,7 @@ struct Room* setStartRoom(struct Room* rooms, char *tempDirectory) {
   strcpy(pathFileLocation, "./");
   strcat(pathFileLocation, tempDirectory);
   strcat(pathFileLocation, "/path");              // Set file to record users path.
-  printf(pathFileLocation);
+  
   FILE *pathFile = fopen(pathFileLocation, "a+");
   fprintf(pathFile, "%s\n", currRoom->name);
   fclose(pathFile);
@@ -436,36 +436,9 @@ int main() {
     currentRoom = getUserChoice(currentRoom, tempDirectory);      // Get user choice
   }
 
-  // Congradulate user
+  // Successful run, Congradulate user
   congratulateUser(pathFilePath);
-
-  // Print contents fo path file to screen.
-
   deleteRooms(rooms);
 
-  // While player is not in end room.
-
-  // Read current room file.
-  // Allocate space to hold possible connections in array.
-  // Prompt player with room movement options.
-  // CURRENT LOCATION: [Current room]
-  // POSSIBLE CONNECTIONS: [room1], [room2].
-  // WHERE TO? >
-
-  // If user enters name of room in array
-  //  set current room to that room name.
-  //  Increment steps taken counter.
-  //  Write room name in temporary path file.
-
-  // Else write error to user then reprompt.
-  // HUH? I DON'T UNDERSTAND THAT ROOM. TRY AGAIN.
-
-
-  // Once in end room.
-  // Print out steps taken counter.
-  // Print out contents of temporary path file.
-
-
-
-
+  exit(0);
 };
